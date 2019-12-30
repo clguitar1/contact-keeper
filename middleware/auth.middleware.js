@@ -1,7 +1,9 @@
 const jwt = require('jsonwebtoken');
-const config = require('config');
+// const config = require('config');
+require('dotenv').config();
+const JWTSecret = process.env.jwtSecret;
 
-module.exports = function (req, res, next) {
+module.exports = function(req, res, next) {
   // Get token from header
   const token = req.header('x-auth-token');
 
@@ -11,7 +13,8 @@ module.exports = function (req, res, next) {
   }
 
   try {
-    const decoded = jwt.verify(token, config.get('jwtSecret'));
+    // const decoded = jwt.verify(token, config.get('jwtSecret'));
+    const decoded = jwt.verify(token, JWTSecret);
 
     req.user = decoded.user;
     next();

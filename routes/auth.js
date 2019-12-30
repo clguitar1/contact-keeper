@@ -2,9 +2,11 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const config = require('config');
+// const config = require('config');
 const auth = require('../middleware/auth.middleware');
 const { check, validationResult } = require('express-validator');
+require('dotenv').config();
+const JWTSecret = process.env.jwtSecret;
 
 const User = require('../models/User');
 
@@ -25,47 +27,56 @@ router.get('/', auth, async (req, res) => {
 // @route   POST api/auth
 // @desc    Login, authenticate user and get token
 // @access  Public
-router.post('/', [
-  check('email', 'Please include a valid email').isEmail(),
-  check('password', 'Password is required').exists()
-], async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
-  const { email, password } = req.body;
-
-  try {
-    let user = await User.findOne({ email });
-    // check for user
-    if (!user) {
-      return res.status(400).json({ msg: 'Invalid credentials' });
+router.post(
+  '/',
+  [
+    check('email', 'Please include a valid email').isEmail(),
+    check('password', 'Password is required').exists()
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
     }
 
-    // check for matching password
-    const isMatch = await bcrypt.compare(password, user.password);
-    // if password doesn't match
-    if (!isMatch) {
-      return res.status(400).json({ msg: 'Invalid credentials' });
-    }
+    const { email, password } = req.body;
 
-    // if the password does match, give them a token that lasts for an hour
-    const payload = {
-      user: {
-        id: user.id
+    try {
+      let user = await User.findOne({ email });
+      // check for user
+      if (!user) {
+        return res.status(400).json({ msg: 'Invalid credentials' });
       }
+
+      // check for matching password
+      const isMatch = await bcrypt.compare(password, user.password);
+      // if password doesn't match
+      if (!isMatch) {
+        return res.status(400).json({ msg: 'Invalid credentials' });
+      }
+
+      // if the password does match, give them a token that lasts for an hour
+      const payload = {
+        user: {
+          id: user.id
+        }
+      };
+      jwt.sign(
+        payload,
+        JWTSecret,
+        {
+          expiresIn: 3600
+        },
+        (err, token) => {
+          if (err) throw err;
+          res.json({ token });
+        }
+      );
+    } catch (error) {
+      console.error(error.message);
+      res.status(500).send('server error');
     }
-    jwt.sign(payload, config.get('jwtSecret'), {
-      expiresIn: 3600
-    }, (err, token) => {
-      if (err) throw err;
-      res.json({ token });
-    });
-  } catch (error) {
-    console.error(error.message);
-    res.status(500).send('server error');
   }
-});
+);
 
 module.exports = router;
