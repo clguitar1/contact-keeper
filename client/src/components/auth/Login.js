@@ -13,7 +13,6 @@ const Login = props => {
     if (isAuthenticated) {
       // if user is authenticated, redirect to the dashboard page
       props.history.push('/');
-    } else {
     }
 
     if (error === 'Invalid Credentials') {

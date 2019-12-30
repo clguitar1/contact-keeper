@@ -45,14 +45,14 @@ router.post(
       let user = await User.findOne({ email });
       // check for user
       if (!user) {
-        return res.status(400).json({ msg: 'Invalid credentials' });
+        return res.status(400).json({ msg: 'Invalid Credentials' });
       }
 
       // check for matching password
       const isMatch = await bcrypt.compare(password, user.password);
       // if password doesn't match
       if (!isMatch) {
-        return res.status(400).json({ msg: 'Invalid credentials' });
+        return res.status(400).json({ msg: 'Invalid Credentials' });
       }
 
       // if the password does match, give them a token that lasts for an hour
